@@ -1,3 +1,4 @@
+#include <ostream>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +15,8 @@
 #elif __unix
 #include <GL/glut.h>
 #endif
-#include <AL/al.h>
-#include <AL/alc.h>
+// #include <AL/al.h>
+// #include <AL/alc.h>
 #include <iostream>
 #include <limits.h>
 #include <math.h>
@@ -25,6 +26,10 @@
 #include <vector>
 
 #define MAX_CARS 3
+
+//! deprecation aldaag arilgah
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 void drawCar();
 void drawFootPath();
@@ -94,7 +99,6 @@ void maindisp() {
 
   glClear(GL_COLOR_BUFFER_BIT);
   glMatrixMode(GL_MODELVIEW);
-
   switch (game_state) {
   case 1:
     glClearColor(0.5, 0.5, 0.5, 0.0);
@@ -619,22 +623,22 @@ void draw_string(std::string str) {
 }
 
 // read audio using openal and play it
-void playAudio() {
-  ALuint buffer, source;
-  ALenum format;
-  ALsizei size;
-  ALvoid *data;
-  ALboolean loop = AL_FALSE;
+// void playAudio() {
+//   ALuint buffer, source;
+//   ALenum format;
+//   ALsizei size;
+//   ALvoid *data;
+//   ALboolean loop = AL_FALSE;
 
-  alGenBuffers(1, &buffer);
-  alutLoadWAVFile((ALbyte *)"audio.wav", &format, &data, &size, &freq, &loop);
-  alBufferData(buffer, format, data, size, freq);
-  alutUnloadWAV(format, data, size, freq);
+//   alGenBuffers(1, &buffer);
+//   alutLoadWAVFile((ALbyte *)"audio.wav", &format, &data, &size, &freq,
+//   &loop); alBufferData(buffer, format, data, size, freq);
+//   alutUnloadWAV(format, data, size, freq);
 
-  alGenSources(1, &source);
-  alSourcei(source, AL_BUFFER, buffer);
-  alSourcePlay(source);
-}
+//   alGenSources(1, &source);
+//   alSourcei(source, AL_BUFFER, buffer);
+//   alSourcePlay(source);
+// }
 
 void drawMainMenu() {
   // Draw start button
@@ -680,7 +684,7 @@ void drawMainMenu() {
   glPushMatrix();
   glTranslated(-15, -30, 0);
   glScalef(0.1, 0.1, 0.1);
-  draw_string("EXIT");
+  draw_string("XAAX");
 
   glPopMatrix();
 
