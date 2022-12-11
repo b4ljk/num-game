@@ -1,60 +1,13 @@
-#include <ostream>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifdef __WIN64
-#include <GL/glut.h>
-#include <windows.h> //for Sleep() only
-#elif __WIN32
-#include <GL/glut.h>
-#include <windows.h> //for Sleep() only
-#elif __APPLE_CC__
-#include <GLUT/glut.h>
-#elif __linux
-#include <GL/glut.h>
-#elif __unix
-#include <GL/glut.h>
-#endif
-// #include <AL/al.h>
-// #include <AL/alc.h>
-#include <iostream>
-#include <limits.h>
-#include <math.h>
-#include <stdint.h>
-#include <time.h>
-#include <unistd.h>
-#include <vector>
+#include "DS.h"
 
-#define MAX_CARS 3
+#define CAR_NUMBER 3
 
 //! deprecation aldaag arilgah
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-void drawCar();
-void drawFootPath();
-void drawDivider();
-void drawSurroundings();
-void stopGame();
-void drawOtherCars(int);
-void drawOther();
-void setCars();
-void moveOtherCars();
-int detectCollision();
-void drawString(std::string);
-void drawMainMenu();
-void drawExitMenu();
-void drawTime();
-void stopGame();
-void resumeGame();
-void drawScore(int);
-void drawDistanceBar();
-void drawEnd();
-void moveEnd();
-void drawFuelBar();
-void fuelMessage();
-void drawFuel();
-
+GLuint obj;
+GLuint image;
 int foot_y = 200;
 int div_y = 220;
 int end_y = 160;
@@ -77,20 +30,27 @@ void moveFuel();
 
 // load audio using openal
 
-int lane[MAX_CARS];
-int pos[MAX_CARS];
-int speeds[MAX_CARS];
-int speedsTemp[MAX_CARS];
+int lane[CAR_NUMBER];
+int pos[CAR_NUMBER];
+int speeds[CAR_NUMBER];
+int speedsTemp[CAR_NUMBER];
 
 GLdouble width = 1480, height = 900;
+bool carMoveLeft = false;
+bool carMoveRight = false;
+bool carMoveFast = false;
+bool carStopped = false;
+bool gameStopped = false;
+bool horn = false;
+bool startColor = false;
+bool highlightExit = false;
+bool reachedEnd = false;
+bool gameCompleted = false;
+bool isFuelOver = false;
 
-bool carMoveLeft = false, carMoveRight = false, carMoveFast = false,
-     carStopped = false, gameStopped = false, horn = false;
-bool highlightStart = false, highlightExit = false;
-bool reachedEnd = false, gameCompleted = false, fuelOver = false;
 // Car variables
-int car_x = 0;
-int car_y = -100;
+int car_x_coordinate = 0;
+int car_y_coordinate = -100;
 
 int fuel_x = 0;
 int fuel_y = -80;
@@ -127,7 +87,7 @@ void maindisp() {
     if (gameCompleted)
       drawEnd();
 
-    if (fuelOver)
+    if (isFuelOver)
       fuelMessage();
 
     drawCar();
@@ -143,114 +103,121 @@ void maindisp() {
   glutSwapBuffers();
 }
 
-void keyBoardFunc(int key, int x, int y) {
-  switch (key) {
-  case GLUT_KEY_LEFT:
-    carMoveLeft = true;
-    carMoveRight = false;
-    break;
-  case GLUT_KEY_RIGHT:
-    carMoveRight = true;
-    carMoveLeft = false;
-    break;
-  case GLUT_KEY_UP:
-    carMoveFast = true;
-    break;
-  }
-}
+GLuint loadBMP_custom(const char *imagepath) {
+  unsigned char header[54];
+  unsigned int dataPos;
+  unsigned int width, height;
+  unsigned int imageSize;
+  unsigned char *l_texture;
+  unsigned char *data;
 
-void keyboard_up_func(int k, int x, int y) {
-  switch (k) {
-  case GLUT_KEY_LEFT:
-    carMoveLeft = false;
-    break;
-  case GLUT_KEY_RIGHT:
-    carMoveRight = false;
-    break;
-
-  case GLUT_KEY_UP:
-    carMoveFast = false;
-    break;
-  case GLUT_KEY_DOWN:
-    carStopped = false;
-    break;
-  }
-}
-
-void normalKeyBoardFunc(unsigned char key, int x, int y) {
-  if (game_state == 1) {
-    switch (key) {
-    // Horn
-    case 'H':
-    case 'h':
-      horn = true;
-      break;
-    }
+  printf("filename: %s\n", imagepath);
+  FILE *file = fopen(imagepath, "rb");
+  if (!file) {
+    printf("Image could not be opened\n");
+    return 0;
+  } else {
+    printf("Image opened\n");
   }
 
-  else if (game_state == 0) {
-    if (key == 13) {
-      setCars();
-      game_state = 1;
-    }
+  if (fread(header, 1, 54, file) != 54) {
+    printf("Not correct\n");
+    return false;
   }
-}
 
-void mouse_func(int button, int state, int x, int y) {
-  switch (game_state) {
-  case 0:
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-      if (x >= 630 && x <= 810 && y >= 320 && y <= 405) {
-        // gameStopped = false;
-        setCars();
-        game_state = 1;
-      }
-
-      else if (x >= 630 && x <= 810 && y >= 490 && y <= 575)
-        exit(0);
-    }
-    break;
-
-  case 2:
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-      if (x >= 630 && x <= 810 && y >= 320 && y <= 405) {
-        gameStopped = false;
-        gameCompleted = false;
-        reachedEnd = false;
-        seconds = 0;
-        distance = 178;
-        tulsh = 178;
-        fuelOver = false;
-        end_y = 160;
-        setCars();
-        game_state = 1;
-        car_x = 0;
-      }
-
-      else if (x >= 630 && x <= 810 && y >= 490 && y <= 575)
-        exit(0);
-    }
-    break;
+  if (header[0] != 'B' || header[1] != 'M') {
+    printf("Not correct\n");
+    return 0;
   }
+  dataPos = *(int *)&(header[0x0A]);
+  imageSize = *(int *)&(header[0x22]);
+  width = *(int *)&(header[0x12]);
+  height = *(int *)&(header[0x16]);
+  RGBTRIPLE rgb;
+  int j = 0;
+  l_texture = (byte *)malloc(width * height * 4);
+
+  // And fill it with zeros
+  memset(l_texture, 0, width * height * 4);
+  // At this point we can read every pixel of the image
+  for (int i = 0; i < width * height; i++) {
+    // We load an RGB value from the file
+    fread(&rgb, sizeof(rgb), 1, file);
+
+    // And store it
+    l_texture[j + 0] = rgb.rgbtRed;   // Red component
+    l_texture[j + 1] = rgb.rgbtGreen; // Green component
+    l_texture[j + 2] = rgb.rgbtBlue;  // Blue component
+    l_texture[j + 3] = 255;           // Alpha value
+    j += 4;                           // Go to the next position
+  }
+
+  data = new unsigned char[imageSize];
+
+  fread(data, 1, imageSize, file);
+
+  fclose(file);
+
+  GLuint textureID;
+  glGenTextures(1, &textureID);
+
+  glBindTexture(GL_TEXTURE_2D, textureID);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR,
+               GL_UNSIGNED_BYTE, data);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                  GL_REPEAT); // If the u,v coordinates overflow the range 0,1
+                              // the image is repeated
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                  GL_LINEAR); // The magnification function ("linear" produces
+                              // better results)
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_NEAREST); // The minifying function
+
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               l_texture);
+
+  gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+                    l_texture);
+
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  return textureID;
 }
 
 void mouse_hover(int x, int y) {
   if (x >= 630 && x <= 810 && y >= 320 && y <= 405) {
-    highlightStart = true;
+    startColor = true;
     highlightExit = false;
   }
 
   else if (x >= 630 && x <= 810 && y >= 490 && y <= 575) {
-    highlightStart = false;
+    startColor = false;
     highlightExit = true;
   }
 
   else {
     highlightExit = false;
-    highlightStart = false;
+    startColor = false;
   }
 }
-
+void init() {
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(-240.0, 240.0, -160.0, 160.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  std::cout << "pids";
+  image = loadBMP_custom("/home/eggs/Documents/webs/Tests/Texture.bmp");
+}
 int main(int argc, char *argv[]) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -259,7 +226,7 @@ int main(int argc, char *argv[]) {
   // glutFullScreen();
 
   gluOrtho2D(-240.0, 240.0, -160.0, 160.0);
-
+  init();
   glutDisplayFunc(maindisp);
   glutTimerFunc(100, periodicFunction, 0);
 
@@ -273,11 +240,11 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// This function draws a car at (car_x, car_y)
 void drawCar(void) {
+  glBindTexture(GL_TEXTURE_2D, image);
   glPushMatrix();
 
-  glTranslated(car_x, car_y, 0.0);
+  glTranslated(car_x_coordinate, car_y_coordinate, 0.0);
 
   glColor3f(0.34, 1.0, 1.0);
 
@@ -450,6 +417,7 @@ void drawDivider() {
 }
 
 void drawSurroundings() {
+  glBindTexture(GL_TEXTURE_2D, image);
   glColor3f(0.0, 1.0, 0.0);
   glRectd(240, 160, 65, -160);
   glRectd(-240, 160, -65, -160);
@@ -467,14 +435,14 @@ void resumeGame() {
 
 void drawOther() {
   int i;
-  for (i = 0; i < MAX_CARS; i++) {
+  for (i = 0; i < CAR_NUMBER; i++) {
     drawOtherCars(i);
   }
 }
 
 void setCars() {
   int i;
-  for (i = 0; i < MAX_CARS; i++) {
+  for (i = 0; i < CAR_NUMBER; i++) {
     lane[i] = i;
     pos[i] = 110 + rand() % 100;
     speeds[i] = 1 + i + rand() % 4;
@@ -496,7 +464,7 @@ void moveDivider() {
     }
 
     if (tulsh < 0)
-      fuelOver = true;
+      isFuelOver = true;
 
     if (distance < 5)
       reachedEnd = true;
@@ -505,12 +473,12 @@ void moveDivider() {
 
 void moveCar() {
   if (carMoveLeft)
-    car_x -= steerSpeed;
+    car_x_coordinate -= steerSpeed;
 
   else if (carMoveRight)
-    car_x += steerSpeed;
+    car_x_coordinate += steerSpeed;
 
-  if (car_x > 45 || car_x < -45) {
+  if (car_x_coordinate > 45 || car_x_coordinate < -45) {
     game_state = 2;
     gameStopped = true;
   }
@@ -542,7 +510,7 @@ void periodicFunction(int v) {
       hurd = 2;
   }
 
-  if (fuelOver) {
+  if (isFuelOver) {
     gameStopped = true;
     game_state = 2;
   }
@@ -568,7 +536,7 @@ void periodicFunction(int v) {
 
 void moveOtherCars() {
   int i;
-  for (i = 0; i < MAX_CARS; i++) {
+  for (i = 0; i < CAR_NUMBER; i++) {
     pos[i] += -hurd + speeds[i];
 
     if (pos[i] < -200 || pos[i] > 200) {
@@ -578,9 +546,9 @@ void moveOtherCars() {
   }
 
   if (horn) {
-    speeds[(car_x + 60) / 40]++;
-    if (speeds[(car_x + 60) / 40] > 7)
-      speeds[(car_x + 60) / 40] = 7;
+    speeds[(car_x_coordinate + 60) / 40]++;
+    if (speeds[(car_x_coordinate + 60) / 40] > 7)
+      speeds[(car_x_coordinate + 60) / 40] = 7;
     horn = false;
   }
 }
@@ -590,10 +558,10 @@ int detectCollision() {
     return 0;
 
   int i, limit;
-  for (i = 0; i < MAX_CARS; i++) {
+  for (i = 0; i < CAR_NUMBER; i++) {
     if (pos[i] < -70 && pos[i] > -130) {
       limit = (i - 1) * 40;
-      if (car_x < limit + 22 && car_x > limit - 22) {
+      if (car_x_coordinate < limit + 22 && car_x_coordinate > limit - 22) {
         speeds[i] = 0;
         gameStopped = true;
         game_state = 2;
@@ -602,8 +570,8 @@ int detectCollision() {
     }
   }
 
-  if ((fuel_x > car_x && fuel_x - car_x < 20) ||
-      (fuel_x < car_x && car_x - fuel_x < 20)) {
+  if ((fuel_x > car_x_coordinate && fuel_x - car_x_coordinate < 20) ||
+      (fuel_x < car_x_coordinate && car_x_coordinate - fuel_x < 20)) {
     if (fuel_y < -80 && fuel_y > -120) {
       tulsh += 40;
       if (tulsh > 178)
@@ -614,205 +582,6 @@ int detectCollision() {
   }
 
   return 0;
-}
-
-void draw_string(std::string str) {
-  for (unsigned int i = 0; i < str.length(); i++) {
-    glutStrokeCharacter(GLUT_STROKE_ROMAN, *(str.begin() + i));
-  }
-}
-
-// read audio using openal and play it
-// void playAudio() {
-//   ALuint buffer, source;
-//   ALenum format;
-//   ALsizei size;
-//   ALvoid *data;
-//   ALboolean loop = AL_FALSE;
-
-//   alGenBuffers(1, &buffer);
-//   alutLoadWAVFile((ALbyte *)"audio.wav", &format, &data, &size, &freq,
-//   &loop); alBufferData(buffer, format, data, size, freq);
-//   alutUnloadWAV(format, data, size, freq);
-
-//   alGenSources(1, &source);
-//   alSourcei(source, AL_BUFFER, buffer);
-//   alSourcePlay(source);
-// }
-
-void drawMainMenu() {
-  // Draw start button
-  glClearColor(0.5, 0.5, 0.5, 0.0);
-  glColor3f(0.0, 0.0, 0.0);
-  drawFootPath();
-  drawSurroundings();
-  drawDivider();
-  drawCar();
-
-  glColor3f(1.0, 1.0, 1.0);
-  glPushMatrix();
-  glTranslated(0, 30, 0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(30, 15);
-  glVertex2f(30, -15);
-  glVertex2f(-30, -15);
-  glVertex2d(-30, 15);
-  glEnd();
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-20, 30, 0);
-  glScalef(0.1, 0.1, 0.1);
-  glColor3f(1.0, 1.0, 1.0);
-  draw_string("EHLEH");
-
-  glPopMatrix();
-
-  // Draw exit button
-  glColor3f(1.0, 1.0, 1.0);
-
-  glPushMatrix();
-  glTranslated(0, -30, 0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(30, 15);
-  glVertex2f(30, -15);
-  glVertex2f(-30, -15);
-  glVertex2d(-30, 15);
-  glEnd();
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-15, -30, 0);
-  glScalef(0.1, 0.1, 0.1);
-  draw_string("XAAX");
-
-  glPopMatrix();
-
-  if (highlightStart) {
-    glColor3f(1.0, 0.0, 0.0);
-
-    glPushMatrix();
-    glTranslated(0, 30, 0);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(35, 20);
-    glVertex2f(35, -20);
-    glVertex2f(-35, -20);
-    glVertex2d(-35, 20);
-    glEnd();
-    glPopMatrix();
-  }
-
-  if (highlightExit) {
-    glColor3f(1.0, 0.0, 0.0);
-
-    glPushMatrix();
-    glTranslated(0, -30, 0);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(35, 20);
-    glVertex2f(35, -20);
-    glVertex2f(-35, -20);
-    glVertex2d(-35, 20);
-    glEnd();
-    glPopMatrix();
-  }
-}
-
-void drawExitMenu() {
-  // Draw start button
-  glColor3f(1.0, 1.0, 1.0);
-  glPushMatrix();
-  glTranslated(0, 30, 0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(30, 15);
-  glVertex2f(30, -15);
-  glVertex2f(-30, -15);
-  glVertex2d(-30, 15);
-  glEnd();
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-25, 30, 0);
-  glScalef(0.1, 0.1, 0.1);
-  glColor3f(1.0, 1.0, 1.0);
-  draw_string("RESTART");
-
-  glPopMatrix();
-
-  // Draw exit button
-  glColor3f(1.0, 1.0, 1.0);
-
-  glPushMatrix();
-  glTranslated(0, -30, 0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(30, 15);
-  glVertex2f(30, -15);
-  glVertex2f(-30, -15);
-  glVertex2d(-30, 15);
-  glEnd();
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-15, -30, 0);
-  glScalef(0.1, 0.1, 0.1);
-  draw_string("EXIT");
-
-  glPopMatrix();
-
-  if (highlightStart) {
-    glColor3f(1.0, 0.0, 0.0);
-
-    glPushMatrix();
-    glTranslated(0, 30, 0);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(35, 20);
-    glVertex2f(35, -20);
-    glVertex2f(-35, -20);
-    glVertex2d(-35, 20);
-    glEnd();
-    glPopMatrix();
-  }
-
-  if (highlightExit) {
-    glColor3f(1.0, 0.0, 0.0);
-
-    glPushMatrix();
-    glTranslated(0, -30, 0);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(35, 20);
-    glVertex2f(35, -20);
-    glVertex2f(-35, -20);
-    glVertex2d(-35, 20);
-    glEnd();
-    glPopMatrix();
-  }
-}
-
-void drawTime() {
-  glColor3f(1.0, 1.0, 1.0);
-  glPushMatrix();
-  glTranslated(-200, 90, 0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(50, 15);
-  glVertex2f(50, -15);
-  glVertex2f(-30, -15);
-  glVertex2d(-30, 15);
-  glEnd();
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-220, 85, 0);
-  glScalef(0.1, 0.1, 0.1);
-  glColor3f(1.0, 1.0, 1.0);
-  draw_string("Time: ");
-  glPopMatrix();
-
-  glPushMatrix();
-  glTranslated(-180, 85, 0);
-  glScalef(0.1, 0.1, 0.1);
-  glColor3f(1.0, 0.0, 0.0);
-  // glutStrokeCharacter(GLUT_STROKE_ROMAN, '4');
-  drawScore(seconds);
-  glPopMatrix();
 }
 
 void drawScore(int score) {
@@ -903,15 +672,6 @@ void drawEnd() {
 
     glPopMatrix();
   }
-}
-
-void fuelMessage() {
-  glPushMatrix();
-  glTranslated(75, -70, 0);
-  glScalef(0.1, 0.1, 0.1);
-  glColor3f(1.0, 0, 0);
-  draw_string("Fuel Exhausted\n");
-  glPopMatrix();
 }
 
 void moveEnd() {
