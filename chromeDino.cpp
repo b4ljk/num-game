@@ -142,7 +142,6 @@ void render(void) {
   glLineWidth(10);
   glBegin(GL_LINES);
   glColor3f(0 / 255.0, 0 / 255.0, 0 / 255.0);
-
   glVertex2f(10 + x, 75 * fact + w);
   glVertex2f(10 + x, 45 * fact + w);
   glVertex2f(15 + x, 65 * fact + w);
