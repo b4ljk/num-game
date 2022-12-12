@@ -48,9 +48,10 @@ void specialKeyOnRelease(int key, int x, int y) {
 }
 
 void draw_circle(double theta, double inner_radius, double outer_radius, int x,
-                 int y, int sin_sign = 1, int cos_sign = 1) {
+                 int y, int sin_sign = 1, int cos_sign = 1, float r = 0.0,
+                 float g = 0.0, float b = 0.0) {
   glBegin(GL_POINTS);
-  glColor3f(0.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0);
+  glColor3f(r / 255.0, g / 255.0, b / 255.0);
   for (double r = outer_radius; r >= inner_radius; r -= 3.0) {
     for (double i = 0; i < theta; i++) {
       double degInRad = i * radian;
@@ -102,6 +103,20 @@ void idleDisplay(int s) {
 
 void render(void) {
   glClear(GL_COLOR_BUFFER_BIT);
+
+  // generate cloud
+  glPointSize(2);
+  glBegin(GL_POINTS);
+  glColor3f((128) / 255.0, (128) / 255.0, (128) / 255.0);
+  for (int i = 0; i < 5; i++) {
+    draw_circle(360, 0, 200, 300, 2000, 1, 1, 200, 200, 200);
+    draw_circle(360, 0, 200, 300 + 150, 2000 + 200, 1, 1, 200, 200, 200);
+    draw_circle(360, 0, 200, 300 - 115, 2000, 1, 1, 200, 200, 200);
+    draw_circle(360, 0, 200, 300 + 113, 2000 - 70, 1, 1, 200, 200, 200);
+  }
+  glEnd();
+
+  // generate cloud
 
   glPointSize(2);
   glBegin(GL_POINTS);
