@@ -28,8 +28,6 @@ void moveCar();
 void periodicFunction(int);
 void moveFuel();
 
-// load audio using openal
-
 int lane[CAR_NUMBER];
 int pos[CAR_NUMBER];
 int speeds[CAR_NUMBER];
@@ -48,7 +46,6 @@ bool reachedEnd = false;
 bool gameCompleted = false;
 bool isFuelOver = false;
 
-// Car variables
 int car_x_coordinate = 0;
 int car_y_coordinate = -100;
 
@@ -65,7 +62,6 @@ void maindisp() {
     drawFootPath();
     drawSurroundings();
     drawDivider();
-    // drawEnd();
     drawCar();
     drawOther();
     drawTime();
@@ -137,14 +133,11 @@ GLuint loadBMP_custom(const char *imagepath) {
   int j = 0;
   l_texture = (byte *)malloc(width * height * 4);
 
-  // And fill it with zeros
   memset(l_texture, 0, width * height * 4);
-  // At this point we can read every pixel of the image
   for (int i = 0; i < width * height; i++) {
     // We load an RGB value from the file
     fread(&rgb, sizeof(rgb), 1, file);
 
-    // And store it
     l_texture[j + 0] = rgb.rgbtRed;   // Red component
     l_texture[j + 1] = rgb.rgbtGreen; // Green component
     l_texture[j + 2] = rgb.rgbtBlue;  // Blue component
@@ -223,7 +216,6 @@ int main(int argc, char *argv[]) {
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize((int)width, (int)height);
   glutCreateWindow("Uraldaan");
-  // glutFullScreen();
 
   gluOrtho2D(-240.0, 240.0, -160.0, 160.0);
   init();
@@ -353,7 +345,6 @@ void drawFootPath() {
   int i, y;
   glPushMatrix();
 
-  // Draw right side foot path
   glTranslated(60, 0, 0);
   y = foot_y + 20;
 
@@ -377,7 +368,6 @@ void drawFootPath() {
   }
   glPopMatrix();
 
-  // Draw left side foot path
   glPushMatrix();
   glTranslated(-60, 0, 0);
 

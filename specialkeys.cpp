@@ -7,7 +7,6 @@ void draw_string(std::string str) {
 }
 
 void drawMainMenu() {
-  // Draw start button
   glClearColor(0.5, 0.5, 0.5, 0.0);
   glColor3f(0.0, 0.0, 0.0);
   drawFootPath();
@@ -34,7 +33,6 @@ void drawMainMenu() {
 
   glPopMatrix();
 
-  // Draw exit button
   glColor3f(1.0, 1.0, 1.0);
 
   glPushMatrix();
@@ -84,7 +82,6 @@ void drawMainMenu() {
 }
 
 void drawExitMenu() {
-  // Draw start button
   glColor3f(1.0, 1.0, 1.0);
   glPushMatrix();
   glTranslated(0, 30, 0);
@@ -104,7 +101,6 @@ void drawExitMenu() {
 
   glPopMatrix();
 
-  // Draw exit button
   glColor3f(1.0, 1.0, 1.0);
 
   glPushMatrix();
@@ -176,7 +172,6 @@ void drawTime() {
   glTranslated(-180, 85, 0);
   glScalef(0.1, 0.1, 0.1);
   glColor3f(1.0, 0.0, 0.0);
-  // glutStrokeCharacter(GLUT_STROKE_ROMAN, '4');
   drawScore(seconds);
   glPopMatrix();
 }
@@ -226,7 +221,6 @@ void keyboard_up_func(int k, int x, int y) {
 void normalKeyBoardFunc(unsigned char key, int x, int y) {
   if (game_state == 1) {
     switch (key) {
-    // Horn
     case 'H':
     case 'h':
       horn = true;
@@ -247,7 +241,6 @@ void mouse_func(int button, int state, int x, int y) {
   case 0:
     if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
       if (x >= 630 && x <= 810 && y >= 320 && y <= 405) {
-        // gameStopped = false;
         setCars();
         game_state = 1;
       }
